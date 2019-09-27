@@ -115,7 +115,7 @@ func NewConn(timeout time.Duration) (*Conn, error) {
 		msgTimeout: timeout,
 		Store:      newStore(),
 
-		longClientName:  "github.com/rhymen/go-whatsapp",
+		longClientName:  "github.com/rhsobr/go-whatsapp",
 		shortClientName: "go-whatsapp",
 	}
 	return wac, wac.connect()
@@ -191,6 +191,19 @@ func (wac *Conn) Disconnect() (Session, error) {
 		return Session{}, err
 	}
 	return *wac.session, err
+}
+
+func (wac *Conn) AdminTest() (bool, error) {
+	if !wac.connected {
+		return false, ErrNotConnected
+	}
+
+	if !wac.loggedIn {
+		return false, ErrInvalidSession
+	}
+
+	result, err := wac.sendAdminTest()
+	return result, err
 }
 
 func (wac *Conn) keepAlive(minIntervalMs int, maxIntervalMs int) {

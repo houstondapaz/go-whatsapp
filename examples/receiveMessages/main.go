@@ -10,7 +10,7 @@ import (
 	"time"
 
 	qrcodeTerminal "github.com/Baozisoftware/qrcode-terminal-go"
-	"github.com/Rhymen/go-whatsapp"
+	"github.com/rhsobr/go-whatsapp"
 )
 
 type waHandler struct {
@@ -40,11 +40,20 @@ func (*waHandler) HandleTextMessage(message whatsapp.TextMessage) {
 }
 
 /*//Example for media handling. Video, Audio, Document are also possible in the same way
-func (*waHandler) HandleImageMessage(message whatsapp.ImageMessage) {
+func (h *waHandler) HandleImageMessage(message whatsapp.ImageMessage) {
 	data, err := message.Download()
 	if err != nil {
-		return
+		if err != whatsapp.ErrMediaDownloadFailedWith410 && err != whatsapp.ErrMediaDownloadFailedWith410 {
+			return
+		}
+		if _, err = h.c.LoadMediaInfo(message.Info.SenderJid, message.Info.Id, strconv.FormatBool(message.Info.FromMe)); err == nil {
+			data, err = message.Download()
+			if err != nil {
+				return
+			}
+		}
 	}
+
 	filename := fmt.Sprintf("%v/%v.%v", os.TempDir(), message.Info.Id, strings.Split(message.Type, "/")[1])
 	file, err := os.Create(filename)
 	defer file.Close()
@@ -71,6 +80,13 @@ func main() {
 	//login or restore
 	if err := login(wac); err != nil {
 		log.Fatalf("error logging in: %v\n", err)
+	}
+
+	//verifies phone connectivity
+	pong, err := wac.AdminTest()
+
+	if !pong || err != nil {
+		log.Fatalf("error pinging in: %v\n", err)
 	}
 
 	c := make(chan os.Signal, 1)
